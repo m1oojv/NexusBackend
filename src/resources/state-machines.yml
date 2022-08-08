@@ -1,0 +1,63 @@
+stateMachines:
+  RiskModelStaging:
+    id: RiskModelStaging
+    name: ${env:STAGE_NAME}-RiskModel-Staging
+    definition:
+      Comment: "Risk model state machine"
+      StartAt: Retrieve Parameters
+      States:
+        Retrieve Parameters:
+          Type: Task
+          Resource:
+            "arn:aws:states:::lambda:invoke"
+          OutputPath: "$.Payload"
+          Parameters:
+            Payload.$: "$"
+            FunctionName:
+              Fn::GetAtt: [retrieve-model-params, Arn]
+          Retry:
+          - ErrorEquals:
+            - "Lambda.ServiceException"
+            - "Lambda.AWSLambdaException"
+            - "Lambda.SdkClientException"
+            IntervalSeconds: 2
+            MaxAttempts: 6
+            BackoffRate: 2
+          Next: Run Model
+        Run Model:
+          Type: Task
+          Resource:
+            "arn:aws:states:::lambda:invoke"
+          OutputPath: "$.Payload"
+          Parameters:
+            Payload.$: "$"
+            FunctionName:
+              "arn:aws:lambda:ap-southeast-1:431837896730:function:broker-pyfair-microservice-dev-pyfair:$LATEST"
+          Retry:
+            - ErrorEquals:
+                - "Lambda.ServiceException"
+                - "Lambda.AWSLambdaException"
+                - "Lambda.SdkClientException"
+              IntervalSeconds: 2
+              MaxAttempts: 6
+              BackoffRate: 2
+          Next: Write database
+        Write database:
+          Type: Task
+          Resource:
+            "arn:aws:states:::lambda:invoke"
+          OutputPath: "$.Payload"
+          Parameters:
+            Payload.$: "$"
+            FunctionName:
+              Fn::GetAtt: [write-model-results, Arn]
+          Retry:
+            - ErrorEquals:
+                - "Lambda.ServiceException"
+                - "Lambda.AWSLambdaException"
+                - "Lambda.SdkClientException"
+              IntervalSeconds: 2
+              MaxAttempts: 6
+              BackoffRate: 2
+          End: true
+validate: true

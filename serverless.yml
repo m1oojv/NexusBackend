@@ -1,0 +1,322 @@
+# For full config options, check the docs:
+#    docs.serverless.com
+
+service: protoslabs
+frameworkVersion: '2'
+
+useDotenv: true
+
+provider:
+  name: aws
+  runtime: python3.8
+  lambdaHashingVersion: 20201221
+  versionFunctions: false
+
+  # Uncomment
+  # vpc:
+  #   securityGroupIds:
+  #     - sg-0f9fe8dedc93d61b9
+  #   subnetIds:
+  #     - subnet-0408f45e7a5537ab7
+  #     - subnet-0cd4dadd73a698092
+
+  # New dev
+  vpc:
+    securityGroupIds:
+      - sg-0f8af9910d06900ae
+    subnetIds:
+      - subnet-0fe757718cc16b973
+      - subnet-0235e584f50153f7c
+
+  # You can overwrite the stage to test your own branch by changing variables in .env
+  stage: ${env:STAGE_NAME}
+  region: ${env:AWS_REGION}
+
+  httpApi:
+    cors: true
+    authorizers:
+      brokerJwtAuthorizer:
+        type: jwt
+        identitySource: $request.header.Authorization
+        issuerUrl: 
+          Fn::GetAtt: [ CognitoUserPool, ProviderURL ]
+        audience:
+          - !Ref CognitoUserPoolClient
+
+functions:
+  # companies
+  get-all-companies:
+    handler: src/functions/web/api/v1/companies.index
+    events:
+      - httpApi:
+          method: GET
+          path: /web/api/v1/companies
+          authorizer:
+            # name: brokerJwtAuthorizer
+  
+  get-one-company:
+    handler: src/functions/web/api/v1/companies.show
+    events:
+      - httpApi:
+          method: GET
+          path: /web/api/v1/companies/{id}
+          authorizer:
+            # name: brokerJwtAuthorizer
+  
+  create-company:
+    handler: src/functions/web/api/v1/companies.create
+    events:
+      - httpApi:
+          method: POST
+          path: /web/api/v1/companies
+          authorizer:
+            # name: brokerJwtAuthorizer
+    environment:
+      QUEUE_URL: ${construct:new-company.queueUrl}
+
+  #INTERIM CREATE COMPANY WORKER
+  create-company-worker:
+    handler: src/functions/web/api/v1/common/companies-create-worker.handler
+    events:
+      - httpApi:
+          method: POST
+          path: /web/api/v1/companies-create-worker
+          authorizer:
+            # name: brokerJwtAuthorizer
+
+  update-company:
+    handler: src/functions/web/api/v1/companies.update
+    events:
+      - httpApi:
+          method: PUT
+          path: /web/api/v1/companies/{id}
+          authorizer:
+            # name: brokerJwtAuthorizer    
+  
+  delete-company:
+    handler: src/functions/web/api/v1/companies.delete
+    events:
+      - httpApi:
+          method: DELETE
+          path: /web/api/v1/companies/{id}
+          authorizer:
+            # name: brokerJwtAuthorizer
+  
+  # company-control-families-scores
+  get-company-control-families:
+    handler: src/functions/web/api/v1/company-control-families.index
+    events:
+      - httpApi:
+          method: GET
+          path: /web/api/v1/companies/{id}/control-families
+          authorizer:
+            # name: brokerJwtAuthorizer
+  
+  get-one-company-control-families:
+    handler: src/functions/web/api/v1/company-control-families.show
+    events:
+      - httpApi:
+          method: GET
+          path: /web/api/v1/companies/{company_id}/control-families/{family_id}
+          authorizer:
+            # name: brokerJwtAuthorizer
+  
+  # company-control-assessment
+  get-controls-assessment:
+    handler: src/functions/web/api/v1/company-controls-assessment.index
+    events:
+      - httpApi:
+          method: GET
+          path: /web/api/v1/companies/{company_id}/controls-assessments/{assessment_id}
+          authorizer:
+            # name: brokerJwtAuthorizer
+  
+  get-assessment-by-family:
+    handler: src/functions/web/api/v1/company-controls-assessment.show
+    events:
+      - httpApi:
+          method: GET
+          path: /web/api/v1/companies/{company_id}/controls-assessments/{assessment_id}/{family_id}
+          authorizer:
+            # name: brokerJwtAuthorizer
+  
+  update-control-scores:
+    handler: src/functions/web/api/v1/company-controls-assessment.update
+    events:
+      - httpApi:
+          method: PUT
+          path: /web/api/v1/companies/{company_id}/controls-assessments/{assessment_id}/{family_id}
+          authorizer:
+            # name: brokerJwtAuthorizer
+  
+  # company-controls-scores
+  get-one-company-controls:
+    handler: src/functions/web/api/v1/company-controls.show
+    events:
+      - httpApi:
+          method: GET
+          path: /web/api/v1/companies/{company_id}/controls/{control_id}
+          authorizer:
+            # name: brokerJwtAuthorizer
+  
+  #company-threat-scenarios
+  get-company-threat-scenarios:
+    handler: src/functions/web/api/v1/company-threat-scenarios.index
+    events:
+      - httpApi:
+          method: GET
+          path: /web/api/v1/companies/{id}/threat-scenarios
+          authorizer:
+            # name: brokerJwtAuthorizer
+  
+  get-one-company-threat-scenario:
+    handler: src/functions/web/api/v1/company-threat-scenarios.show
+    events:
+      - httpApi:
+          method: GET
+          path: /web/api/v1/companies/{company_id}/threat-scenarios/{threat_scenario_id}
+          authorizer:
+            # name: brokerJwtAuthorizer
+  #reports
+  create-pdf-report:
+    handler: src/functions/web/api/v1/company-reports.create
+    events:
+      - httpApi:
+          method: POST
+          path: /web/api/v1/companies/reports
+          authorizer:
+            # name: brokerJwtAuthorizer
+    iamRoleStatements:
+      - Effect: Allow
+        Action:
+          - s3:*
+        Resource: 
+          Fn::Join: ["", [{ "Fn::GetAtt" : [ "s3BucketUpload", "Arn" ] } ,"/*"]]
+    environment:
+      S3_BUCKET_NAME: !Ref s3BucketUpload
+  
+  #users
+  user-profile:
+    handler: src/functions/web/api/v1/users.show
+    events:
+      - httpApi:
+          method: GET
+          path: /web/api/v1/users/current-user
+          authorizer:
+            # name: brokerJwtAuthorizer
+    iamRoleStatements:
+      - Effect: Allow
+        Action:
+          - dynamodb:GetItem
+          - dynamodb:PutItem
+        Resource: 
+          Fn::GetAtt: [ DynamoDbTable, Arn ]
+    environment:
+      TABLE_NAME: ${file(src/resources/dynamodb-table.yml):Resources.DynamoDbTable.Properties.TableName}
+  create-new-user:
+    handler: src/functions/web/api/v1/users.create
+    iamRoleStatements:
+      - Effect: Allow
+        Action:
+          - cognito-idp:*
+        Resource: 
+          Fn::GetAtt: [ CognitoUserPool, Arn ]
+      - Effect: Allow
+        Action:
+          - dynamodb:GetItem
+          - dynamodb:PutItem
+        Resource: 
+          Fn::GetAtt: [ DynamoDbTable, Arn ]
+    environment:
+      TABLE_NAME: ${file(src/resources/dynamodb-table.yml):Resources.DynamoDbTable.Properties.TableName}
+      REGION: ${env:AWS_REGION}
+      POOL_ID: !Ref CognitoUserPool
+
+  #model params
+  retrieve-model-params:
+    handler: src/functions/web/api/v1/common/retrieve-model-params.handler
+  write-model-results:
+    handler: src/functions/web/api/v1/common/write-model-results.handler
+  
+  #migration
+  upgradeMigration:
+    handler: src/services/alembic.upgrade_head
+    events:
+      - httpApi:
+          method: POST
+          path: /alembic/upgrade-head
+
+  downgradeMigration:
+    handler: src/services/alembic.downgrade_base
+    events:
+      - httpApi:
+          method: POST
+          path: /alembic/downgrade-base
+
+  dataMigration:
+    handler: src/services/alembic.data_migration
+    events:
+      - httpApi:
+          method: POST
+          path: /alembic/seed-data
+
+constructs:
+  new-company:
+    type: queue
+    worker:
+      handler: src/functions/web/api/v1/common/companies-create-worker.handler
+      timeout: 800
+      maxRetries: 1
+      iamRoleStatements:
+        - Effect: Allow
+          Action:
+            - states:*
+          Resource:
+            Ref: RiskModelStaging
+      environment:
+        STATE_MACHINE_ARN:
+          Ref: RiskModelStaging
+
+stepFunctions:
+  ${file(src/resources/state-machines.yml)}
+
+# Add CloudFormation resource templates here
+resources:
+#   Cognito User Pool
+  - ${file(src/resources/cognito-user-pool.yml)}
+#   s3 bucket
+  - ${file(src/resources/s3bucket-reports.yml)}
+#   DynamoDBtable
+  - ${file(src/resources/dynamodb-table.yml)}
+
+plugins:
+  - serverless-python-requirements
+  - serverless-prune-plugin
+  - serverless-iam-roles-per-function
+  - serverless-lift
+  - serverless-step-functions
+  - serverless-s3-remover
+  - serverless-offline
+  - serverless-dotenv-plugin
+custom:
+  pythonRequirements:
+    dockerizePip: true
+  s3BucketName: ${env:STAGE_NAME}-protoslabs-reportsupload
+  remover:
+    prompt: true
+    buckets:
+      - ${self:custom.s3BucketName}
+  dotenv:
+    include: '*'
+    exclude: []
+    logging: false
+    required: 
+      env: []
+      file: false
+    variableExpansion: true
+  
+  # Configures throttling settings for the API Gateway stage
+  # They apply to all http endpoints, unless specifically overridden
+#  apiGatewayThrottling:
+#    maxRequestsPerSecond: 1000
+#    maxConcurrentRequests: 500
