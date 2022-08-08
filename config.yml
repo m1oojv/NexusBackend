@@ -1,0 +1,3 @@
+Variables:
+  REGION: ap-southeast-1
+  STAGE_NAME: dev

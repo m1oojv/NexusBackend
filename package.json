@@ -1,0 +1,19 @@
+{
+  "name": "protoslabs",
+  "description": "",
+  "version": "0.1.0",
+  "devDependencies": {
+    "serverless-dotenv-plugin": "^4.0.1",
+    "serverless-iam-roles-per-function": "^3.2.0",
+    "serverless-lift": "^1.9.1",
+    "serverless-offline": "^8.8.1",
+    "serverless-prune-plugin": "^1.6.0",
+    "serverless-python-requirements": "^5.4.0",
+    "serverless-s3-remover": "^0.6.0",
+    "serverless-step-functions": "^3.7.0"
+  },
+  "dependencies": {
+    "serverless-offline-sqs": "^6.0.0",
+    "serverless-plugin-include-dependencies": "^4.1.0"
+  }
+}

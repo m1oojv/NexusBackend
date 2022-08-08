@@ -24,19 +24,38 @@ followed when contributing to this repository as much as possible.
 * [Python](https://www.python.org/downloads/)
 * [AWS CLI](https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html)
 * [Docker](https://www.docker.com/products/docker-desktop/)
+* [PostgreSQL](https://www.postgresql.org/download/windows/)
 
+---
+## (Old)
 ### Running the code
 
 1. Fork this repository and git clone the forked copy to your local machine.
 2. Run `cd NexusBrokerBackend`
 3. Run `npm install`
 4. Open `config.yml` in your text editor.
-5. Change the `STAGE` and `STATE_MACHINE_NAME` variable to something unique to you.
+5. Change the `STAGE_NAME` and `STATE_MACHINE_NAME` variable to something unique to you.
 6. Open `src/config/config.ini`, ensure that the endpoint points to the correct (staging vs production) database.
 **NOTE: Ensure you don't do your development work using the production database!**
 7. Set AWS environment variables (AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, AWS_SESSION_TOKEN)
 8. Run `serverless deploy`
+---
+## (New)
+### Running the code
+1. Git clone `NexusBrokerBack` to your local machine.
+2. Run `cd NexusBrokerBackend`
+3. Git checkout to ... `git checkout <branch_name>`
+4. Run `npm install`
+5. Run `pip install -r requirements.txt`
+6. Go to commands.txt and copy the content and paste it in the command prompt / windows powershell
+7. Create database `python db/database.py`
+8. Upgrade migration `alembic upgrade head`
+9. Seed data `python -m db.seed`
+10. Run `serverless offline start --functionCleanupIdleTimeSeconds 1 --stage development`
 
+> NOTE: Request for csv files
+
+---
 ## Services
 
 Services will be resolved into individual AWS lambda functions and will each serve a single purpose. The frontend of 

@@ -1,0 +1,87 @@
+Resources:
+  CognitoUserPool:
+    Type: AWS::Cognito::UserPool
+    Properties:
+      # Generate a name based on the stage
+      UserPoolName: ${file(./serverless.env.yml):${opt:stage, self:provider.stage}.STAGE}-user-pool
+      AdminCreateUserConfig: 
+        AllowAdminCreateUserOnly: false
+        # Customize Invite messages
+        InviteMessageTemplate: 
+          EmailMessage: 
+            Hi,<br><br>
+            Welcome to Nexus.<br><br>
+            We are happy to have you onboard our platform!<br><br>
+            Your username is {username} and temporary password is {####}.<br><br>
+            You can login here https://app.broker.protoslabs.io.<br><br>
+            Protos Labs' Customer Success Team
+          EmailSubject: Your temporary password
+          SMSMessage: 
+            Hi,
+            Your username is {username} and temporary password is {####}.
+            You can login here https://app.broker.protoslabs.io.
+            Protos Labs
+        UnusedAccountValidityDays: 7
+      # MFA Settings for users
+      MfaConfiguration: OPTIONAL
+      EnabledMfas: [SOFTWARE_TOKEN_MFA]
+      Policies:
+          PasswordPolicy:
+            MinimumLength: 8
+            RequireLowercase: False
+            RequireNumbers: False
+            RequireSymbols: False
+            RequireUppercase: False
+      AccountRecoverySetting: 
+        RecoveryMechanisms: 
+          - Name: verified_email
+            Priority: 1
+      # Set email as an alias
+      UsernameAttributes:
+        - email
+      UsernameConfiguration: 
+        CaseSensitive: false
+      AutoVerifiedAttributes:
+        - email
+      # Adding custom attributes 
+      Schema: 
+        - Name: "Name"
+          AttributeDataType: String
+          Mutable: true
+        - Name: company
+          AttributeDataType: String
+          Mutable: true
+        - Name: tenant_id
+          AttributeDataType: String
+          Mutable: true
+        - Name: user_type
+          AttributeDataType: String
+          Mutable: true
+        - Name: access_type
+          AttributeDataType: String
+          Mutable: true
+
+  CognitoUserPoolClient:
+    Type: AWS::Cognito::UserPoolClient
+    Properties:
+      # Generate an app client name based on the stage
+      ClientName: ${file(./serverless.env.yml):${opt:stage, self:provider.stage}.STAGE}-user-pool-client
+      UserPoolId:
+        Ref: CognitoUserPool
+      ExplicitAuthFlows:
+        - ADMIN_NO_SRP_AUTH
+      GenerateSecret: false
+      ReadAttributes:
+        - custom:tenant_id
+        - custom:user_type
+        - custom:access_type
+
+# Print out the Id of the User Pool that is created
+Outputs:
+  UserPoolId:
+    Value:
+      Ref: CognitoUserPool
+
+  UserPoolClientId:
+    Value:
+      Ref: CognitoUserPoolClient

@@ -1,0 +1,13 @@
+requests
+aws-psycopg2
+configparser
+boto3
+shodan
+checkdmarc
+reportlab
+alembic==1.8.0
+psycopg2-binary
+# psycopg2==2.9.3
+SQLAlchemy==1.4.37
+SQLAlchemy-Utils==0.38.2
+Mako==1.2.0 

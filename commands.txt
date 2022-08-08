@@ -1,0 +1,16 @@
+Commands to set database credentials to local machine
+(WINDOWS)
+setx DB_USER postgres
+setx DB_PASS postgres
+setx DB_HOST localhost
+setx DB_PORT 5432
+setx DB_NAME nexus_broker_development
+setx STAGE dev
+
+(MAC)
+export DB_USER postgres
+export DB_PASS postgres
+export DB_HOST localhost
+export DB_PORT 5432
+export DB_NAME nexus_broker_development
+export STAGE dev
