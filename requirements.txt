@@ -1,0 +1,4 @@
+requests
+aws-psycopg2
+configparser
+boto3

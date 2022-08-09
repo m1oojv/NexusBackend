@@ -1,0 +1,4 @@
+Variables:
+  REGION: ap-southeast-1
+  POOL_ID: ap-southeast-1_lZgqoA2sp
+  POOL_ARN: arn:aws:cognito-idp:ap-southeast-1:431837896730:userpool/ap-southeast-1_lZgqoA2sp

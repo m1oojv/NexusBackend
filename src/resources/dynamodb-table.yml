@@ -1,0 +1,33 @@
+Resources:
+  DynamoDbTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: userData
+      AttributeDefinitions:
+        - AttributeName: tenantId
+          AttributeType: S
+        - AttributeName: userId
+          AttributeType: S
+      KeySchema:
+        - AttributeName: tenantId
+          KeyType: HASH
+        - AttributeName: userId
+          KeyType: RANGE
+      ProvisionedThroughput:
+          ReadCapacityUnits: 5
+          WriteCapacityUnits: 5
+  DynamoDBIamPolicy:
+    Type: AWS::IAM::Policy
+    DependsOn: DynamoDbTable
+    Properties:
+      PolicyName: lambda-dynamodb
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Action:
+              - dynamodb:GetItem
+              - dynamodb:PutItem
+            Resource: arn:aws:dynamodb:*:*:table/*
+      Roles:
+        - Ref: IamRoleLambdaExecution

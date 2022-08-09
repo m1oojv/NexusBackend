@@ -1,0 +1,44 @@
+{
+    "data": [
+        {
+            "name": "Business Email Compromise",
+            "average": 123000,
+            "ratio": 1.338
+        },
+        {
+            "name": "Ransomware",
+            "average": 123000,
+            "ratio": 3.271
+        },
+        {
+            "name": "Hacker",
+            "average": 430000,
+            "ratio": 7.540
+        },
+        {
+            "name": "Malware",
+            "average": 160000,
+            "ratio": 1.728
+        },
+        {
+            "name": "Phishing",
+            "average": 72000,
+            "ratio": 0.713
+        },
+        {
+            "name": "Insider",
+            "average": 91000,
+            "ratio": 1.334
+        },
+        {
+            "name": "Third Party",
+            "average": 33000,
+            "ratio": 0.229
+        },
+        {
+            "name": "DDOS",
+            "average": 85000,
+            "ratio": 0.214
+        }
+    ]
+}

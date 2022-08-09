@@ -1,0 +1,294 @@
+# Welcome to Serverless!
+#
+# This file is the main config file for your service.
+# It's very minimal at this point and uses default values.
+# You can always add more config options for more control.
+# We've included some commented out config examples here.
+# Just uncomment any of them to get that config option.
+#
+# For full config options, check the docs:
+#    docs.serverless.com
+#
+# Happy Coding!
+
+service: protoslabs
+# app and org for use with dashboard.serverless.com
+#app: your-app-name
+#org: your-org-name
+
+# You can pin your service to only deploy with a specific Serverless version
+# Check out our docs for more details
+frameworkVersion: '2'
+
+provider:
+  name: aws
+  runtime: python3.8
+  lambdaHashingVersion: 20201221
+  versionFunctions: false
+
+  vpc:
+    securityGroupIds:
+      - sg-0f9fe8dedc93d61b9
+    subnetIds:
+      - subnet-0408f45e7a5537ab7
+      - subnet-0cd4dadd73a698092
+
+# you can overwrite defaults here
+  stage: broker-staging
+  region: ap-southeast-1
+
+  httpApi:
+    cors: true
+
+functions:
+  #currentscore:
+  #  handler: src/services/currentscore.handler
+  #  events:
+  #    - httpApi:
+  #        method: POST
+  #        path: /currentscore
+  #threats - deprecated
+  #threatscenario:
+  #  handler: src/services/currentscore.threatScenario
+  #  events:
+  #    - httpApi:
+  #        method: GET
+  #        path: /threatscenario
+  #threatscenariodetails:
+  #  handler: src/services/currentscore.threatScenarioDetails
+  #  events:
+  #    - httpApi:
+  #       method: POST
+  #       path: /threatscenariodetails
+  #threats
+  updatethreatscenario:
+    handler: src/services/threats.updatethreatscenario
+    events:
+      - httpApi:
+          method: POST
+          path: /updatethreatscenario
+  supplychainthreatscenariodetails:
+    handler: src/services/threats.threatscenariodetails
+    events:
+      - httpApi:
+          method: POST
+          path: /supplychainthreatscenariodetails
+  vendorthreatscenario:
+    handler: src/services/threats.threatscenario
+    events:
+      - httpApi:
+          method: POST
+          path: /vendorthreatscenario
+  #controls
+  companycontrolfamilies:
+    handler: src/services/controls.companycontrolfamilies
+    events:
+      - httpApi:
+          method: POST
+          path: /vendorcontrolfamilies
+  companycontrolfamilydetails:
+    handler: src/services/controls.companycontrolfamilydetails
+    events:
+      - httpApi:
+          method: POST
+          path: /vendorcontrolfamilydetails
+  companycontroldetails:
+    handler: src/services/controls.companycontroldetails
+    events:
+      - httpApi:
+          method: POST
+          path: /vendorcontroldetails
+  #controls assessment
+  controlassessment:
+    handler: src/services/controlsassessment.controlassessment
+    events:
+      - httpApi:
+          method: POST
+          path: /controlassessment
+  controlassessmentfamily:
+    handler: src/services/controlsassessment.controlassessmentfamily
+    events:
+      - httpApi:
+          method: POST
+          path: /controlassessmentfamily
+  updatecontrolscore:
+    handler: src/services/controlsassessment.updatecontrolscore
+    events:
+      - httpApi:
+          method: POST
+          path: /updatecontrolscore
+  #investments apis
+  #investments:
+  #  handler: src/services/enterprise.investments
+  #  events:
+  #    - httpApi:
+  #        method: GET
+  #        path: /investments
+  #insurance apis
+  companydetails:
+    handler: src/services/insurance.companydetails
+    events:
+      - httpApi:
+          method: POST
+          path: /companydetails
+  insuredcompanies:
+    handler: src/services/insurance.insuredcompanies
+    events:
+      - httpApi:
+          method: GET
+          path: /insuredcompanies
+  insurancedashboard:
+    handler: src/services/insurance.insurancedashboard
+    events:
+      - httpApi:
+          method: GET
+          path: /insurancedashboard
+  #resiliency score calculation
+  calculatecompanyscores:
+    handler: src/services/insurance.calculatecompanyscores
+  #add new company to insurance application
+  addnewcompany:
+    handler: src/services/insurance.addnewcompany
+    events:
+      - httpApi:
+          method: POST
+          path: /addnewcompany
+    environment:
+      QUEUE_URL: ${construct:jobs.queueUrl}
+  #deletecompany
+  deletecompany:
+    handler: src/services/insurance.deletecompany
+    events:
+      - httpApi:
+          method: DELETE
+          path: /deletecompany
+  #model parameters
+  retrievemodelparametersclass:
+    handler: src/services/model.retrievemodelparametersclass
+  writemodelresults:
+    handler: src/services/model.writemodelresults
+  #User Data
+  userdata:
+    handler: src/services/userdata.handler
+    iamRoleStatements:
+      - Effect: Allow
+        Action:
+          - dynamodb:GetItem
+          - dynamodb:PutItem
+        Resource: arn:aws:dynamodb:*:*:table/*
+    environment:
+      TABLE_NAME: ${file(src/resources/dynamodb-table.yml):Resources.DynamoDbTable.Properties.TableName}
+  #get user data profile data
+  userprofile:
+    handler: src/services/userdata.userprofile
+    events:
+      - httpApi:
+          method: GET
+          path: /userprofile
+    iamRoleStatementsName: dynamoDB #optional custom role name setting instead of the default generated one
+    iamRoleStatements:
+      - Effect: Allow
+        Action:
+          - dynamodb:GetItem
+          - dynamodb:PutItem
+        Resource: arn:aws:dynamodb:*:*:table/*
+  #create new user
+  createnewuser:
+    handler: src/services/userdata.createnewuser
+    events:
+      - httpApi:
+          method: POST
+          path: /createnewuser
+    iamRoleStatements:
+      - Effect: Allow
+        Action:
+          - cognito-idp:*
+        Resource: ${file(./config.yml):Variables.POOL_ARN}
+      - Effect: Allow
+        Action:
+          - dynamodb:GetItem
+          - dynamodb:PutItem
+        Resource: arn:aws:dynamodb:*:*:table/*
+    environment:
+      REGION: ${file(./config.yml):Variables.REGION}
+      POOL_ID: ${file(./config.yml):Variables.POOL_ID}
+
+constructs:
+  jobs:
+      type: queue
+      worker:
+            handler: src/services/insurance.worker
+            timeout: 180
+            maxRetries: 1
+            iamRoleStatements:
+              - Effect: Allow
+                Action:
+                  - states:*
+                Resource: arn:aws:states:ap-southeast-1:431837896730:stateMachine:RiskModel
+#    The following are a few example events you can configure 
+#    NOTE: Please make sure to change your handler code to work with those events
+#    Check the event documentation for details
+#    events:
+#      - httpApi:
+#          path: /users/create
+#          method: get
+#      - websocket: $connect
+#      - s3: ${env:BUCKET}
+#      - schedule: rate(10 minutes)
+#      - sns: greeter-topic
+#      - stream: arn:aws:dynamodb:region:XXXXXX:table/foo/stream/1970-01-01T00:00:00.000
+#      - alexaSkill: amzn1.ask.skill.xx-xx-xx-xx
+#      - alexaSmartHome: amzn1.ask.skill.xx-xx-xx-xx
+#      - iot:
+#          sql: "SELECT * FROM 'some_topic'"
+#      - cloudwatchEvent:
+#          event:
+#            source:
+#              - "aws.ec2"
+#            detail-type:
+#              - "EC2 Instance State-change Notification"
+#            detail:
+#              state:
+#                - pending
+#      - cloudwatchLog: '/aws/lambda/hello'
+#      - cognitoUserPool:
+#          pool: MyUserPool
+#          trigger: PreSignUp
+#      - alb:
+#          listenerArn: arn:aws:elasticloadbalancing:us-east-1:XXXXXX:listener/app/my-load-balancer/50dc6c495c0c9188/
+#          priority: 1
+#          conditions:
+#            host: example.com
+#            path: /hello
+
+#    Define function environment variables here
+#    environment:
+#      variable2: value2
+
+# you can add CloudFormation resource templates here
+resources:
+  # DynamoDB
+  - ${file(src/resources/dynamodb-table.yml)}
+#  Resources:
+#    NewResource:
+#      Type: AWS::S3::Bucket
+#      Properties:
+#        BucketName: my-new-bucket
+#  Outputs:
+#     NewOutput:
+#       Description: "Description for the output"
+#       Value: "Some output value"
+
+plugins:
+  - serverless-python-requirements
+  - serverless-prune-plugin
+  - serverless-iam-roles-per-function
+  - serverless-lift
+custom:
+  pythonRequirements:
+    dockerizePip: true
+  # Configures throttling settings for the API Gateway stage
+  # They apply to all http endpoints, unless specifically overridden
+#  apiGatewayThrottling:
+#    maxRequestsPerSecond: 1000
+#    maxConcurrentRequests: 500
